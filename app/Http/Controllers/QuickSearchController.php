@@ -41,8 +41,8 @@ class QuickSearchController extends Controller
         if ($user && $user->hasAnyRole(['admin', 'petugas_admin', 'petugas_buku'])) {
             $users = User::where('name', 'LIKE', "%{$query}%")
                 ->orWhere('email', 'LIKE', "%{$query}%")
-                ->orWhere('nisn_nip', 'LIKE', "%{$query}%")
-                ->select('id', 'name', 'email', 'nisn_nip')
+                ->orWhere('member_id', 'LIKE', "%{$query}%")
+                ->select('id', 'name', 'email', 'member_id')
                 ->limit(5)
                 ->get();
 

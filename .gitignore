@@ -22,6 +22,9 @@
 .env.*
 !.env.example
 !.env.testing
+.env.backup
+.env.prod
+.env.production
 
 # Local databases and dumps
 *.sql
@@ -32,6 +35,24 @@
 *.dump
 *.pem
 *.key
+*.crt
+*.csr
+*.pfx
+/database/database.sqlite
+/database/*.sqlite
+
+# Sensitive configuration files
+/config/database.php.backup
+/config/*.backup
+oauth-*.json
+credentials.json
+service-account.json
+
+# Backup files
+*.backup
+*.old
+*.orig
+*~
 
 # Logs and caches
 *.log

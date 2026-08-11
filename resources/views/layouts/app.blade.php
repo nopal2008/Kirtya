@@ -180,7 +180,20 @@
                         <p class="truncate text-xs font-semibold text-white">{{ auth()->user()?->name ?? 'Pengguna' }}
                         </p>
                         <p class="truncate text-[10px] text-slate-400">
-                            {{ auth()->user()?->getRoleNames()?->first() ?? 'Tanpa Peran' }}</p>
+                            @php
+                                $displayRole = 'Tanpa Peran';
+                                if (auth()->check()) {
+                                    try {
+                                        $roles = auth()->user()->getRoleNames();
+                                        $displayRole = is_object($roles)
+                                            ? $roles->first() ?? 'Tanpa Peran'
+                                            : $roles[0] ?? 'Tanpa Peran';
+                                    } catch (\Throwable $e) {
+                                        $displayRole = 'Tanpa Peran';
+                                    }
+                                }
+                            @endphp
+                            {{ $displayRole }}</p>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
@@ -220,7 +233,9 @@
                         class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-xs font-medium transition-all shadow-sm">
                         <i class="fa-solid fa-magnifying-glass text-indigo-500"></i>
                         <span>Pencarian Cepat...</span>
-                        <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-white rounded border border-slate-200 shadow-2xs">Ctrl K</kbd>
+                        <kbd
+                            class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-white rounded border border-slate-200 shadow-2xs">Ctrl
+                            K</kbd>
                     </button>
                     <button onclick="openSpotlight()" title="Cari Cepat"
                         class="md:hidden flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
@@ -322,119 +337,146 @@
                 @yield('content')
             </main>
 
-    {{-- SPOTLIGHT SEARCH MODAL --}}
-    <div id="spotlight-modal" class="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-slate-900/60 backdrop-blur-sm hidden" onclick="if(event.target === this) closeSpotlight()">
-        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-slate-200 transform transition-all">
-            <div class="flex items-center px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                <i class="fa-solid fa-magnifying-glass text-slate-400 mr-3 text-sm"></i>
-                <input type="text" id="spotlight-input" oninput="debounceSearch()" placeholder="Cari judul buku, pengarang, ISBN, nama anggota, atau kode transaksi..." 
-                    class="w-full bg-transparent text-sm text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
-                <kbd class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-200/60 rounded">ESC</kbd>
-            </div>
+            {{-- SPOTLIGHT SEARCH MODAL --}}
+            <div id="spotlight-modal"
+                class="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-slate-900/60 backdrop-blur-sm hidden"
+                onclick="if(event.target === this) closeSpotlight()">
+                <div
+                    class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-slate-200 transform transition-all">
+                    <div class="flex items-center px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-3 text-sm"></i>
+                        <input type="text" id="spotlight-input" oninput="debounceSearch()"
+                            placeholder="Cari judul buku, pengarang, ISBN, nama anggota, atau kode transaksi..."
+                            class="w-full bg-transparent text-sm text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
+                        <kbd
+                            class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-200/60 rounded">ESC</kbd>
+                    </div>
 
-            <div id="spotlight-results" class="p-4 max-h-[60vh] overflow-y-auto space-y-4">
-                <div class="text-center py-8 text-slate-400 text-xs">
-                    Ketik minimal 2 karakter untuk mencari seluruh data perpustakaan...
+                    <div id="spotlight-results" class="p-4 max-h-[60vh] overflow-y-auto space-y-4">
+                        <div class="text-center py-8 text-slate-400 text-xs">
+                            Ketik minimal 2 karakter untuk mencari seluruh data perpustakaan...
+                        </div>
+                    </div>
+
+                    <div
+                        class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>Gunakan <kbd class="px-1 py-0.5 bg-slate-200 rounded text-slate-600 font-mono">Ctrl</kbd>
+                            + <kbd class="px-1 py-0.5 bg-slate-200 rounded text-slate-600 font-mono">K</kbd> untuk
+                            membuka pencarian dari mana saja</span>
+                        <span>SIPerpus QuickSearch</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Gunakan <kbd class="px-1 py-0.5 bg-slate-200 rounded text-slate-600 font-mono">Ctrl</kbd> + <kbd class="px-1 py-0.5 bg-slate-200 rounded text-slate-600 font-mono">K</kbd> untuk membuka pencarian dari mana saja</span>
-                <span>SIPerpus QuickSearch</span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const isHidden = sidebar.classList.contains('-translate-x-full');
-            if (isHidden) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function toggleNotifications() {
-            document.getElementById('notif-dropdown').classList.toggle('hidden');
-            document.getElementById('user-menu-dropdown').classList.add('hidden');
-        }
-
-        function toggleUserMenu() {
-            document.getElementById('user-menu-dropdown').classList.toggle('hidden');
-            document.getElementById('notif-dropdown').classList.add('hidden');
-        }
-
-        document.addEventListener('click', function(e) {
-            const notifBtn = document.getElementById('notif-btn');
-            const userBtn = document.getElementById('user-menu-btn');
-            if (notifBtn && !notifBtn.contains(e.target) && !document.getElementById('notif-dropdown').contains(e.target)) {
-                document.getElementById('notif-dropdown').classList.add('hidden');
-            }
-            if (userBtn && !userBtn.contains(e.target) && !document.getElementById('user-menu-dropdown').contains(e.target)) {
-                document.getElementById('user-menu-dropdown').classList.add('hidden');
-            }
-        });
-
-        // Spotlight Search Functions
-        function openSpotlight() {
-            const modal = document.getElementById('spotlight-modal');
-            const input = document.getElementById('spotlight-input');
-            modal.classList.remove('hidden');
-            setTimeout(() => input.focus(), 50);
-        }
-
-        function closeSpotlight() {
-            document.getElementById('spotlight-modal').classList.add('hidden');
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
-                const modal = document.getElementById('spotlight-modal');
-                if (modal.classList.contains('hidden')) {
-                    openSpotlight();
-                } else {
-                    closeSpotlight();
+            <script>
+                function toggleSidebar() {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebar-overlay');
+                    const isHidden = sidebar.classList.contains('-translate-x-full');
+                    if (isHidden) {
+                        sidebar.classList.remove('-translate-x-full');
+                        overlay.classList.remove('hidden');
+                    } else {
+                        sidebar.classList.add('-translate-x-full');
+                        overlay.classList.add('hidden');
+                    }
                 }
-            }
-            if (e.key === 'Escape') {
-                closeSpotlight();
-            }
-        });
 
-        let searchTimeout = null;
-        function debounceSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(performSpotlightSearch, 300);
-        }
+                function toggleNotifications() {
+                    document.getElementById('notif-dropdown').classList.toggle('hidden');
+                    document.getElementById('user-menu-dropdown').classList.add('hidden');
+                }
 
-        async function performSpotlightSearch() {
-            const query = document.getElementById('spotlight-input').value.trim();
-            const resultsContainer = document.getElementById('spotlight-results');
+                function toggleUserMenu() {
+                    document.getElementById('user-menu-dropdown').classList.toggle('hidden');
+                    document.getElementById('notif-dropdown').classList.add('hidden');
+                }
 
-            if (query.length < 2) {
-                resultsContainer.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs">Ketik minimal 2 karakter untuk mencari...</div>';
-                return;
-            }
+                document.addEventListener('click', function(e) {
+                    const notifBtn = document.getElementById('notif-btn');
+                    const userBtn = document.getElementById('user-menu-btn');
+                    if (notifBtn && !notifBtn.contains(e.target) && !document.getElementById('notif-dropdown').contains(e
+                            .target)) {
+                        document.getElementById('notif-dropdown').classList.add('hidden');
+                    }
+                    if (userBtn && !userBtn.contains(e.target) && !document.getElementById('user-menu-dropdown').contains(e
+                            .target)) {
+                        document.getElementById('user-menu-dropdown').classList.add('hidden');
+                    }
+                });
 
-            resultsContainer.innerHTML = '<div class="text-center py-8 text-indigo-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin text-base mr-2"></i>Mencari data...</div>';
+                // Spotlight Search Functions
+                function openSpotlight() {
+                    const modal = document.getElementById('spotlight-modal');
+                    const input = document.getElementById('spotlight-input');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => input.focus(), 50);
+                }
 
-            try {
-                const response = await fetch(`{{ route('quick-search') }}?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
+                function closeSpotlight() {
+                    document.getElementById('spotlight-modal').classList.add('hidden');
+                }
 
-                let html = '';
+                document.addEventListener('keydown', function(e) {
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                        e.preventDefault();
+                        const modal = document.getElementById('spotlight-modal');
+                        if (modal.classList.contains('hidden')) {
+                            openSpotlight();
+                        } else {
+                            closeSpotlight();
+                        }
+                    }
+                    if (e.key === 'Escape') {
+                        closeSpotlight();
+                    }
+                });
 
-                if (data.books && data.books.length > 0) {
-                    html += `<div class="space-y-1">
+                let searchTimeout = null;
+
+                function debounceSearch() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(performSpotlightSearch, 300);
+                }
+
+                async function performSpotlightSearch() {
+                    const query = document.getElementById('spotlight-input').value.trim();
+                    const resultsContainer = document.getElementById('spotlight-results');
+
+                    if (query.length < 2) {
+                        resultsContainer.innerHTML =
+                            '<div class="text-center py-8 text-slate-400 text-xs">Ketik minimal 2 karakter untuk mencari...</div>';
+                        return;
+                    }
+
+                    resultsContainer.innerHTML =
+                        '<div class="text-center py-8 text-indigo-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin text-base mr-2"></i>Mencari data...</div>';
+
+                    try {
+                        const response = await fetch(`{{ route('quick-search') }}?q=${encodeURIComponent(query)}`, {
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            resultsContainer.innerHTML =
+                                '<div class="text-center py-8 text-red-500 text-xs">Terjadi kesalahan saat mencari. Silakan coba lagi.</div>';
+                            return;
+                        }
+
+                        const data = await response.json();
+
+                        let html = '';
+
+                        if (data.books && data.books.length > 0) {
+                            html +=
+                                `<div class="space-y-1">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 px-2">Katalog Buku (${data.books.length})</p>`;
-                    data.books.forEach(book => {
-                        html += `<a href="{{ url('/opac') }}/${book.id}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-indigo-50/80 transition-colors group">
+                            data.books.forEach(book => {
+                                html += `<a href="{{ url('/opac') }}/${book.id}" class="flex items-center justify-between p-2.5 rounded-xl hover:bg-indigo-50/80 transition-colors group">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 text-xs font-bold">
                                     <i class="fa-solid fa-book"></i>
@@ -446,36 +488,38 @@
                             </div>
                             <i class="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-indigo-500"></i>
                         </a>`;
-                    });
-                    html += `</div>`;
-                }
+                            });
+                            html += `</div>`;
+                        }
 
-                if (data.users && data.users.length > 0) {
-                    html += `<div class="space-y-1 pt-2">
+                        if (data.users && data.users.length > 0) {
+                            html +=
+                                `<div class="space-y-1 pt-2">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 px-2">Pengguna / Anggota (${data.users.length})</p>`;
-                    data.users.forEach(u => {
-                        html += `<div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition-colors">
+                            data.users.forEach(u => {
+                                html += `<div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition-colors">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 text-xs font-bold">
                                     <i class="fa-solid fa-user"></i>
                                 </div>
                                 <div>
                                     <p class="text-xs font-semibold text-slate-800">${escapeHtml(u.name)}</p>
-                                    <p class="text-[11px] text-slate-400">Email: ${escapeHtml(u.email ?? '-')} | NISN/NIP: ${escapeHtml(u.nisn_nip ?? '-')}</p>
+                                    <p class="text-[11px] text-slate-400">Email: ${escapeHtml(u.email ?? '-')} | ID Anggota: ${escapeHtml(u.member_id ?? '-')}</p>
                                 </div>
                             </div>
                         </div>`;
-                    });
-                    html += `</div>`;
-                }
+                            });
+                            html += `</div>`;
+                        }
 
-                if (data.transactions && data.transactions.length > 0) {
-                    html += `<div class="space-y-1 pt-2">
+                        if (data.transactions && data.transactions.length > 0) {
+                            html +=
+                                `<div class="space-y-1 pt-2">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 px-2">Transaksi Peminjaman (${data.transactions.length})</p>`;
-                    data.transactions.forEach(t => {
-                        const bookTitle = t.book_stock?.book?.title ?? 'Buku';
-                        const userName = t.user?.name ?? 'Anggota';
-                        html += `<div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors">
+                            data.transactions.forEach(t => {
+                                const bookTitle = t.book_stock?.book?.title ?? 'Buku';
+                                const userName = t.user?.name ?? 'Anggota';
+                                html += `<div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600 text-xs font-bold">
                                     <i class="fa-solid fa-receipt"></i>
@@ -486,31 +530,33 @@
                                 </div>
                             </div>
                         </div>`;
-                    });
-                    html += `</div>`;
+                            });
+                            html += `</div>`;
+                        }
+
+                        if (html === '') {
+                            html =
+                                '<div class="text-center py-8 text-slate-400 text-xs">Tidak ada hasil yang cocok dengan kata kunci tersebut.</div>';
+                        }
+
+                        resultsContainer.innerHTML = html;
+                    } catch (err) {
+                        resultsContainer.innerHTML =
+                            '<div class="text-center py-8 text-rose-500 text-xs">Gagal memuat hasil pencarian.</div>';
+                    }
                 }
 
-                if (html === '') {
-                    html = '<div class="text-center py-8 text-slate-400 text-xs">Tidak ada hasil yang cocok dengan kata kunci tersebut.</div>';
+                function escapeHtml(str) {
+                    if (!str) return '';
+                    return String(str)
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
                 }
-
-                resultsContainer.innerHTML = html;
-            } catch (err) {
-                resultsContainer.innerHTML = '<div class="text-center py-8 text-rose-500 text-xs">Gagal memuat hasil pencarian.</div>';
-            }
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-    </script>
-    @stack('scripts')
+            </script>
+            @stack('scripts')
 </body>
 
 </html>

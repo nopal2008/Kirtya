@@ -34,6 +34,28 @@ class MemberController extends Controller
     }
 
     /**
+     * Scan Barcode Buku di OPAC
+     */
+    public function opacScan(Request $request)
+    {
+        $barcode = trim($request->query('barcode', ''));
+        $stock = null;
+        $notFound = false;
+
+        if ($barcode !== '') {
+            $stock = BookStock::with('book')->where('barcode', $barcode)->first();
+
+            if ($stock && $stock->book) {
+                return redirect()->route('opac.show', $stock->book);
+            }
+
+            $notFound = true;
+        }
+
+        return view('opac.scan', compact('barcode', 'notFound'));
+    }
+
+    /**
      * Detail Buku di OPAC
      */
     public function opacShow(Book $book)

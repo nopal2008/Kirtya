@@ -18,14 +18,15 @@ use App\Http\Controllers\MetricsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuickSearchController;
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Prometheus & Grafana Monitoring Endpoint
 Route::get('/metrics', [MetricsController::class, 'metrics'])->name('metrics');
 
-// Redirect root
+// Landing page
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return auth()->check() ? redirect()->route('dashboard') : view('welcome');
 });
 
 // ============================================================
@@ -33,7 +34,10 @@ Route::get('/', function () {
 // ============================================================
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
+    // Rate limit: 5 attempts per 15 minutes untuk mencegah brute force
+    Route::post('/login', [LoginController::class, 'login'])
+        ->middleware('throttle:5,15')
+        ->name('login.post');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
@@ -56,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
 
     // OPAC Catalog (Semua Pengguna Terautentikasi)
     Route::get('/opac', [MemberController::class, 'opac'])->name('opac.index');
+    Route::get('/opac/scan', [MemberController::class, 'opacScan'])->name('opac.scan');
     Route::get('/opac/{book}', [MemberController::class, 'opacShow'])->name('opac.show');
 
     // --------------------------------------------------------
@@ -118,5 +123,4 @@ Route::middleware(['auth'])->group(function () {
         Route::post('bookings/{book}', [MemberController::class, 'storeBooking'])->name('bookings.store');
         Route::get('fines', [MemberController::class, 'fines'])->name('fines');
     });
-
 });
