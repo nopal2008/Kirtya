@@ -65,6 +65,14 @@ npm-debug.log
 yarn-error.log
 /auth.json
 
+# Docker volumes
+/mysql_data
+/redis_data
+
+# Backups
+/backups
+*.tar.gz
+
 # Editor settings
 /.fleet
 /.idea

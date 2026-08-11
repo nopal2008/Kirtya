@@ -1,0 +1,81 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# CI/CD files
+.github
+.gitlab-ci.yml
+
+# Documentation
+*.md
+README*
+CHANGELOG*
+LICENSE
+docs/
+
+# Environment files
+.env*
+!.env.example
+
+# IDE and editor files
+.vscode
+.idea
+.fleet
+.nova
+.zed
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+.npm
+
+# Build artifacts
+/public/hot
+/public/storage
+
+# Testing
+tests/
+.phpunit.result.cache
+.phpunit.cache
+phpunit.xml
+coverage/
+.coverage
+
+# Storage and cache (will be mounted as volumes)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+
+# Database
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+database/*.sqlite
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+
+# Vendor (will be installed during build)
+vendor/
