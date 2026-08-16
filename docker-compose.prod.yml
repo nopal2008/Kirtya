@@ -8,7 +8,7 @@ version: "3.8"
 services:
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
-    container_name: perpus_app
+    container_name: perpus_Kirtya
     restart: unless-stopped
     working_dir: /var/www/html
     ports:
@@ -152,3 +152,4 @@ volumes:
     driver: local
   redis_data:
     driver: local
+s
